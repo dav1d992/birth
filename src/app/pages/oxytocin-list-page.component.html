@@ -2,7 +2,7 @@
   <h1>{{ title() }}</h1>
 
   @if (errorKey().length > 0) {
-    <p class="error">{{ i18n.t(errorKey()) }}</p>
+    <p class="error" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
   }
 
   @if (!unlocked()) {
@@ -10,9 +10,13 @@
     <label>
       {{ i18n.t('oxytocin.list.password') }}
       <input
-        type="password"
-        name="oxytocin-unlock-password"
-        autocomplete="new-password"
+        class="masked"
+        type="text"
+        name="oxytocin-unlock-secret"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
         [value]="password()"
         (input)="onPasswordInput($event)"
       />
@@ -21,16 +25,35 @@
   } @else {
     <div class="actions">
       <button type="button" (click)="addItem()">{{ i18n.t('oxytocin.list.add') }}</button>
+      <button type="button" class="ghost" (click)="shareLink()">
+        @if (linkCopied()) {
+          <span animate.enter="enter">{{ i18n.t('oxytocin.list.linkCopied') }}</span>
+        } @else {
+          <span animate.enter="enter">{{ i18n.t('oxytocin.list.share') }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        class="info-btn"
+        [attr.aria-label]="i18n.t('oxytocin.list.infoAria')"
+        [attr.aria-expanded]="showInfo()"
+        (click)="toggleInfo()"
+      >
+        i
+      </button>
       <button type="button" class="danger" (click)="deleteList()">{{ i18n.t('oxytocin.list.deleteList') }}</button>
-      @if (savedPulse()) {
-        <span class="saved">{{ i18n.t('oxytocin.list.saved') }}</span>
-      }
     </div>
+
+    @if (showInfo()) {
+      <p class="info-panel" animate.enter="enter" animate.leave="leave">
+        <span class="lock" aria-hidden="true">&#128274;</span>
+        {{ i18n.t('oxytocin.list.encryptedInfo') }}
+      </p>
+    }
 
     <ul>
       @for (item of items(); track item.id; let idx = $index) {
-        <li>
-          <input type="checkbox" [checked]="item.done" (change)="toggleDone(item.id)" />
+        <li [attr.data-id]="item.id" animate.enter="enter" animate.leave="leave">
           <input
             class="text"
             name="oxytocin-item-text"

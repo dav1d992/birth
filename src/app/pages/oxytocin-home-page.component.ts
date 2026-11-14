@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { I18nService } from '../services/i18n.service';
 import { OxytocinService } from '../services/oxytocin.service';
+import { AdminService } from '../services/admin.service';
 import type { RememberedList } from '../models/oxytocin';
 
 @Component({
@@ -16,10 +17,15 @@ export class OxytocinHomePageComponent {
   readonly #router = inject(Router);
 
   readonly i18n = inject(I18nService);
+  readonly admin = inject(AdminService);
   readonly title = signal<string>('');
   readonly password = signal<string>('');
   readonly errorKey = signal<string>('');
-  readonly rememberedLists = signal<Array<RememberedList>>(this.#service.readRememberedLists());
+  readonly rememberedLists = signal<Array<RememberedList>>([]);
+
+  constructor() {
+    void this.loadLists();
+  }
 
   onTitleInput(event: Event): void {
     const target = event.target;
@@ -44,10 +50,18 @@ export class OxytocinHomePageComponent {
 
     try {
       const id: string = await this.#service.createList(this.title(), this.password());
-      this.rememberedLists.set(this.#service.readRememberedLists());
+      await this.loadLists();
       await this.#router.navigate(['/oxytocin', id]);
     } catch (error) {
       this.errorKey.set(this.errorFrom(error));
+    }
+  }
+
+  private async loadLists(): Promise<void> {
+    try {
+      this.rememberedLists.set(await this.#service.loadRememberedLists());
+    } catch {
+      this.rememberedLists.set([]);
     }
   }
 

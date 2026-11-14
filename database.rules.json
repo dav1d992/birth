@@ -78,6 +78,16 @@
         ".write": "auth != null && ((newData.exists() && root.child('listClaims/' + $listId + '/' + auth.uid).val() === root.child('listSecrets/' + $listId).val()) || (!newData.exists() && (root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val() || root.child('listClaims/' + $listId + '/' + auth.uid).exists())))",
         ".validate": "!newData.exists() || (newData.hasChildren(['iv', 'ct', 'updatedAt']) && newData.child('iv').isString() && newData.child('ct').isString() && newData.child('updatedAt').isNumber())"
       }
+    },
+
+    "userLists": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        "$listId": {
+          ".validate": "!newData.exists() || (newData.hasChildren(['title', 'savedAt']) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 120 && newData.child('savedAt').isNumber())"
+        }
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Subscription } from 'rxjs';
@@ -17,6 +17,7 @@ export class OxytocinListPageComponent {
   readonly #router = inject(Router);
   readonly #service = inject(OxytocinService);
   readonly #destroyRef = inject(DestroyRef);
+  readonly #host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly i18n = inject(I18nService);
   readonly listId = signal<string>('');
@@ -25,7 +26,8 @@ export class OxytocinListPageComponent {
   readonly errorKey = signal<string>('');
   readonly items = signal<Array<OxytocinItem>>([]);
   readonly unlocked = signal<boolean>(false);
-  readonly savedPulse = signal<boolean>(false);
+  readonly showInfo = signal<boolean>(false);
+  readonly linkCopied = signal<boolean>(false);
 
   #saveHandle: ReturnType<typeof setTimeout> | null = null;
   #allowAutoSave = false;
@@ -99,10 +101,19 @@ export class OxytocinListPageComponent {
     ]);
   }
 
-  toggleDone(itemId: string): void {
-    this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> =>
-      items.map((item: OxytocinItem): OxytocinItem => (item.id === itemId ? { ...item, done: !item.done } : item))
-    );
+  toggleInfo(): void {
+    this.showInfo.update((value: boolean): boolean => !value);
+  }
+
+  async shareLink(): Promise<void> {
+    const url: string = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.linkCopied.set(true);
+      setTimeout((): void => this.linkCopied.set(false), 2000);
+    } catch {
+      window.prompt(this.i18n.t('oxytocin.list.share'), url);
+    }
   }
 
   moveUp(index: number): void {
@@ -155,23 +166,68 @@ export class OxytocinListPageComponent {
   }
 
   private reorder(from: number, to: number): void {
-    this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> => {
-      const updated = [...items];
-      const moved = updated[from];
-      if (moved === undefined) {
-        return items;
-      }
-      updated.splice(from, 1);
-      updated.splice(to, 0, moved);
-      return updated;
+    this.flipReorder((): void => {
+      this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> => {
+        const updated = [...items];
+        const moved = updated[from];
+        if (moved === undefined) {
+          return items;
+        }
+        updated.splice(from, 1);
+        updated.splice(to, 0, moved);
+        return updated;
+      });
     });
+  }
+
+  private flipReorder(mutate: () => void): void {
+    const reduceMotion: boolean = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      mutate();
+      return;
+    }
+
+    const first: Map<string, number> = this.measureRows();
+    mutate();
+
+    requestAnimationFrame((): void => {
+      const rows = this.#host.nativeElement.querySelectorAll<HTMLLIElement>('li[data-id]');
+      rows.forEach((row: HTMLLIElement): void => {
+        const id: string | undefined = row.dataset['id'];
+        if (id === undefined) {
+          return;
+        }
+        const previousTop: number | undefined = first.get(id);
+        if (previousTop === undefined) {
+          return;
+        }
+        const delta: number = previousTop - row.getBoundingClientRect().top;
+        if (delta === 0) {
+          return;
+        }
+        row.animate(
+          [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0)' }],
+          { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+        );
+      });
+    });
+  }
+
+  private measureRows(): Map<string, number> {
+    const positions = new Map<string, number>();
+    const rows = this.#host.nativeElement.querySelectorAll<HTMLLIElement>('li[data-id]');
+    rows.forEach((row: HTMLLIElement): void => {
+      const id: string | undefined = row.dataset['id'];
+      if (id !== undefined) {
+        positions.set(id, row.getBoundingClientRect().top);
+      }
+    });
+    return positions;
   }
 
   private async persistItems(id: string, items: Array<OxytocinItem>): Promise<void> {
     try {
       await this.#service.saveItems(id, items);
-      this.savedPulse.set(true);
-      setTimeout(() => this.savedPulse.set(false), 700);
     } catch (error) {
       this.errorKey.set(this.errorFrom(error));
     }

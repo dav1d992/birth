@@ -5,10 +5,23 @@
     <nav>
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ i18n.t('nav.timeline') }}</a>
       <a routerLink="/oxytocin" routerLinkActive="active">{{ i18n.t('nav.oxytocin') }}</a>
-      <a routerLink="/admin" routerLinkActive="active">{{ i18n.t('nav.admin') }}</a>
     </nav>
 
-    <app-language-switch />
+    <div class="header-actions">
+      <app-language-switch />
+      <a
+        class="admin-lock"
+        routerLink="/admin"
+        routerLinkActive="active"
+        [attr.aria-label]="i18n.t('nav.admin')"
+        [attr.title]="i18n.t('nav.admin')"
+      >
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="11" width="16" height="9" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        </svg>
+      </a>
+    </div>
   </header>
 
   <main>

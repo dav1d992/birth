@@ -99,6 +99,20 @@ header {
   flex: 1 1 auto;
 }
 
+.phase-location {
+  flex: 0 0 auto;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary-dim);
+  background: var(--primary-soft);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+
 .chevron {
   flex: 0 0 auto;
   width: 0.6rem;
@@ -170,4 +184,13 @@ header {
 
 .red {
   color: var(--danger-dim);
+}
+
+.call-variant {
+  margin: 0.4rem 0 0;
+}
+
+.call-variant strong {
+  color: var(--text);
+  font-weight: 700;
 }

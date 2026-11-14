@@ -1,11 +1,11 @@
 export const environment = {
   firebase: {
-    apiKey: 'REPLACE_WITH_FIREBASE_API_KEY',
-    authDomain: 'REPLACE_WITH_PROJECT.firebaseapp.com',
-    databaseURL: 'https://REPLACE_WITH_PROJECT-default-rtdb.europe-west1.firebasedatabase.app',
-    projectId: 'REPLACE_WITH_PROJECT',
-    storageBucket: 'REPLACE_WITH_PROJECT.firebasestorage.app',
-    messagingSenderId: 'REPLACE_WITH_SENDER_ID',
-    appId: 'REPLACE_WITH_APP_ID',
+    apiKey: 'AIzaSyB7vHJPqexRNHn-WVGMRKJg19F82NxAAwc',
+    authDomain: 'birth-6ace9.firebaseapp.com',
+    databaseURL: 'https://birth-6ace9-default-rtdb.europe-west1.firebasedatabase.app',
+    projectId: 'birth-6ace9',
+    storageBucket: 'birth-6ace9.firebasestorage.app',
+    messagingSenderId: '94144097146',
+    appId: '1:94144097146:web:f7ac6f2f5d5a794f94c4c3',
   },
 };

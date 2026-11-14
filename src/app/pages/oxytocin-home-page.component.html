@@ -3,7 +3,7 @@
   <p>{{ i18n.t('oxytocin.home.intro') }}</p>
 
   @if (errorKey().length > 0) {
-    <p class="error">{{ i18n.t(errorKey()) }}</p>
+    <p class="error" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
   }
 
   <label>
@@ -20,29 +20,34 @@
   <label>
     {{ i18n.t('oxytocin.home.password') }}
     <input
-      type="password"
-      name="oxytocin-new-password"
-      autocomplete="new-password"
+      class="masked"
+      type="text"
+      name="oxytocin-new-secret"
+      autocomplete="off"
+      autocapitalize="off"
+      autocorrect="off"
+      spellcheck="false"
+      [placeholder]="i18n.t('oxytocin.home.passwordHint')"
       [value]="password()"
       (input)="onPasswordInput($event)"
     />
   </label>
 
-  <small>{{ i18n.t('oxytocin.home.passwordHint') }}</small>
-
   <button type="button" (click)="create()">{{ i18n.t('oxytocin.home.create') }}</button>
 
-  <h2>{{ i18n.t('oxytocin.home.savedLists') }}</h2>
-  @if (rememberedLists().length === 0) {
-    <p>{{ i18n.t('oxytocin.home.empty') }}</p>
-  } @else {
-    <ul>
-      @for (item of rememberedLists(); track item.id) {
-        <li>
-          <span>{{ item.title }}</span>
-          <a [routerLink]="['/oxytocin', item.id]">{{ i18n.t('oxytocin.home.open') }}</a>
-        </li>
-      }
-    </ul>
+  @if (admin.isAdmin()) {
+    <h2>{{ i18n.t('oxytocin.home.savedLists') }}</h2>
+    @if (rememberedLists().length === 0) {
+      <p animate.enter="enter">{{ i18n.t('oxytocin.home.empty') }}</p>
+    } @else {
+      <ul>
+        @for (item of rememberedLists(); track item.id) {
+          <li animate.enter="enter" animate.leave="leave">
+            <span>{{ item.title }}</span>
+            <a [routerLink]="['/oxytocin', item.id]">{{ i18n.t('oxytocin.home.open') }}</a>
+          </li>
+        }
+      </ul>
+    }
   }
 </section>

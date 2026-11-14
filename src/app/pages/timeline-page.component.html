@@ -9,7 +9,7 @@
   <h2>{{ i18n.t('timeline.section.pregnancy') }}</h2>
   <div class="overview-grid">
     @for (block of overview; track block.titleKey) {
-      <article class="panel">
+      <article class="panel" animate.enter="enter">
         <h3>{{ i18n.t(block.titleKey) }}</h3>
         <p>{{ i18n.t(block.bodyKey) }}</p>
       </article>
@@ -19,10 +19,13 @@
   <h2>{{ i18n.t('timeline.section.birth') }}</h2>
   <div class="line">
     @for (phase of phases; track phase.id) {
-      <article class="phase" [class.open]="isExpanded(phase.id)">
+      <article class="phase" [class.open]="isExpanded(phase.id)" animate.enter="enter">
         <button type="button" class="phase-head" (click)="toggle(phase.id)">
           <span class="dot"></span>
           <span class="phase-title">{{ i18n.t(phase.titleKey) }}</span>
+          @if (phase.locationKey) {
+            <span class="phase-location">{{ i18n.t(phase.locationKey) }}</span>
+          }
           <span class="chevron" aria-hidden="true"></span>
         </button>
 
@@ -36,11 +39,6 @@
               <p>{{ i18n.t(phase.firstTimeKey) }}</p>
             }
 
-            @if (phase.breathingKey) {
-              <h4>{{ i18n.t('timeline.breathing') }}</h4>
-              <p>{{ i18n.t(phase.breathingKey) }}</p>
-            }
-
             @if (phase.painReliefKey) {
               <h4>{{ i18n.t('timeline.painRelief') }}</h4>
               <p>{{ i18n.t(phase.painReliefKey) }}</p>
@@ -52,11 +50,21 @@
             <h4>{{ i18n.t('timeline.partner') }}</h4>
             <p>{{ i18n.t(phase.partnerKey) }}</p>
 
-            <h4>{{ i18n.t('timeline.callWard') }}</h4>
-            <p>{{ i18n.t(phase.callWardKey) }}</p>
+            @if (phase.callWardKey) {
+              <h4>{{ i18n.t('timeline.callWard') }}</h4>
+              <p>{{ i18n.t(phase.callWardKey) }}</p>
+              @if (phase.callFirstKey) {
+                <p class="call-variant"><strong>{{ i18n.t('timeline.firstTimer') }}</strong> {{ i18n.t(phase.callFirstKey) }}</p>
+              }
+              @if (phase.callAgainKey) {
+                <p class="call-variant"><strong>{{ i18n.t('timeline.experienced') }}</strong> {{ i18n.t(phase.callAgainKey) }}</p>
+              }
+            }
 
-            <h4 class="red">{{ i18n.t('timeline.redFlags') }}</h4>
-            <p class="red">{{ i18n.t(phase.redFlagsKey) }}</p>
+            @if (phase.redFlagsKey) {
+              <h4 class="red">{{ i18n.t('timeline.redFlags') }}</h4>
+              <p class="red">{{ i18n.t(phase.redFlagsKey) }}</p>
+            }
           </div>
         </div>
       </article>

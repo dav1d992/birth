@@ -58,6 +58,37 @@
   letter-spacing: -0.01em;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.admin-lock:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-color: var(--primary-soft);
+}
+
+.admin-lock.active {
+  color: var(--on-primary);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dim));
+  border-color: transparent;
+}
+
 .brand::before {
   content: '';
   width: 0.8rem;

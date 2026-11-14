@@ -129,6 +129,12 @@ textarea::placeholder {
   color: var(--text-muted);
 }
 
+/* Masks input like a password without a type=password field, so Chrome's password manager stays quiet. */
+input.masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
 input:focus,
 textarea:focus,
 select:focus {
@@ -210,4 +216,60 @@ label {
   gap: 0.35rem;
   font-weight: 600;
   color: var(--text);
+}
+
+/* Page transition: routed component roots fade/slide in on navigation. */
+main > * {
+  display: block;
+  animation: page-enter 0.4s ease both;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reusable enter/leave animations for conditional elements (animate.enter / animate.leave). */
+.enter {
+  animation: el-enter 0.3s ease both;
+}
+
+.leave {
+  animation: el-leave 0.24s ease both;
+}
+
+@keyframes el-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes el-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main > *,
+  .enter,
+  .leave {
+    animation: none;
+  }
 }

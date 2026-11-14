@@ -6,7 +6,6 @@ import { FIREBASE_DB } from '../core/firebase';
 import { AuthSessionService } from './auth-session.service';
 import type { OxytocinItem, OxytocinListData, OxytocinListMeta, RateLimitState, RememberedList } from '../models/oxytocin';
 
-const LIST_STORAGE_KEY = 'birth-lists';
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 3;
 
@@ -41,23 +40,36 @@ export class OxytocinService {
     });
   }
 
-  readRememberedLists(): Array<RememberedList> {
-    const raw: string | null = localStorage.getItem(LIST_STORAGE_KEY);
-    if (raw === null) {
+  async loadRememberedLists(): Promise<Array<RememberedList>> {
+    const user = await this.#authSession.ensureUser();
+    const snapshot = await get(ref(this.#db, `userLists/${user.uid}`));
+    const value = snapshot.val() as Record<string, unknown> | null;
+    if (value === null) {
       return [];
     }
 
-    try {
-      const parsed = JSON.parse(raw) as Array<RememberedList>;
-      return parsed.filter((entry: RememberedList): boolean => entry.id.length > 0 && entry.title.length > 0);
-    } catch {
-      return [];
+    const entries: Array<{ id: string; title: string; savedAt: number }> = [];
+    for (const [id, raw] of Object.entries(value)) {
+      if (typeof raw !== 'object' || raw === null) {
+        continue;
+      }
+      const candidate = raw as { title?: unknown; savedAt?: unknown };
+      if (typeof candidate.title === 'string' && candidate.title.length > 0) {
+        entries.push({
+          id,
+          title: candidate.title,
+          savedAt: typeof candidate.savedAt === 'number' ? candidate.savedAt : 0,
+        });
+      }
     }
+
+    entries.sort((a, b): number => b.savedAt - a.savedAt);
+    return entries.map((entry): RememberedList => ({ id: entry.id, title: entry.title }));
   }
 
   async createList(title: string, password: string): Promise<string> {
     const safeTitle: string = title.trim();
-    if (password.length < 8) {
+    if (password.length < 4) {
       throw new Error('err.passwordTooShort');
     }
     if (safeTitle.length === 0) {
@@ -101,7 +113,7 @@ export class OxytocinService {
     this.activeListId.set(listId);
     this.activeTitle.set(safeTitle);
     this.items.set([]);
-    this.rememberList({ id: listId, title: safeTitle });
+    await this.rememberList({ id: listId, title: safeTitle });
 
     return listId;
   }
@@ -143,7 +155,7 @@ export class OxytocinService {
       this.activeListId.set(listId);
       this.activeTitle.set(meta.title);
       this.items.set(decrypted);
-      this.rememberList({ id: listId, title: meta.title });
+      await this.rememberList({ id: listId, title: meta.title });
 
       return decrypted;
     } catch (error) {
@@ -171,13 +183,14 @@ export class OxytocinService {
   }
 
   async deleteList(listId: string): Promise<void> {
-    await this.#authSession.ensureUser();
+    const user = await this.#authSession.ensureUser();
     await update(ref(this.#db), {
       [`listMeta/${listId}`]: null,
       [`listSecrets/${listId}`]: null,
       [`listData/${listId}`]: null,
       [`listClaims/${listId}`]: null,
       [`listAttempts/${listId}`]: null,
+      [`userLists/${user.uid}/${listId}`]: null,
     });
 
     if (this.activeListId() === listId) {
@@ -186,15 +199,16 @@ export class OxytocinService {
       this.items.set([]);
       this.#activeKey = null;
     }
-
-    const filtered = this.readRememberedLists().filter((entry: RememberedList): boolean => entry.id !== listId);
-    localStorage.setItem(LIST_STORAGE_KEY, JSON.stringify(filtered));
   }
 
-  private rememberList(entry: RememberedList): void {
-    const existing = this.readRememberedLists().filter((item: RememberedList): boolean => item.id !== entry.id);
-    existing.unshift(entry);
-    localStorage.setItem(LIST_STORAGE_KEY, JSON.stringify(existing.slice(0, 20)));
+  private async rememberList(entry: RememberedList): Promise<void> {
+    const user = await this.#authSession.ensureUser();
+    await update(ref(this.#db), {
+      [`userLists/${user.uid}/${entry.id}`]: {
+        title: entry.title,
+        savedAt: serverTimestamp(),
+      },
+    });
   }
 
   private nextRateLimitState(previous: RateLimitState | null): RateLimitState {
