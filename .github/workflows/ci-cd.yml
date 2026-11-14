@@ -54,6 +54,6 @@ jobs:
             set net:reconnect-interval-base 10;
             set net:persist-retries 5;
             open -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" -p \"$FTP_PORT\" \"$FTP_SERVER\";
-            mirror -R --delete --ignore-time --verbose --parallel=2 ./dist/birth/ ./;
-            put -O ./ ./dist/birth/index.html;
+            mirror -R --delete --ignore-time --verbose --parallel=2 ./dist/birth/ ./05-birth/;
+            put -O ./05-birth/ ./dist/birth/index.html;
           "
