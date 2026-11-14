@@ -37,6 +37,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lftp
 
       - name: Deploy to Hostinger via FTP
+        timeout-minutes: 10
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
@@ -44,16 +45,17 @@ jobs:
           FTP_PORT: ${{ secrets.FTP_PORT }}
         run: |
           lftp -c "
+            debug 3;
             set ftp:ssl-allow yes;
             set ftp:ssl-force no;
             set ssl:verify-certificate no;
             set ftp:passive-mode on;
             set ftp:prefer-epsv no;
-            set net:timeout 30;
-            set net:max-retries 5;
-            set net:reconnect-interval-base 10;
-            set net:persist-retries 5;
+            set net:timeout 20;
+            set net:max-retries 2;
+            set net:reconnect-interval-base 5;
+            set net:persist-retries 1;
             open -u \"$FTP_USERNAME\",\"$FTP_PASSWORD\" -p \"$FTP_PORT\" \"$FTP_SERVER\";
-            mirror -R --delete --ignore-time --verbose --parallel=2 ./dist/birth/ ./05-birth/dist/birth/;
-            put -O ./05-birth/dist/birth/ ./dist/birth/index.html;
+            mirror -R --delete --ignore-time --verbose --parallel=2 ./dist/birth/ ./public_html/05-birth/dist/birth/;
+            put -O ./public_html/05-birth/dist/birth/ ./dist/birth/index.html;
           "
