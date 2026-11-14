@@ -1,0 +1,17 @@
+<div class="app-shell">
+  <header class="site-header">
+    <a class="brand" routerLink="/">{{ i18n.t('app.name') }}</a>
+
+    <nav>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{ i18n.t('nav.timeline') }}</a>
+      <a routerLink="/oxytocin" routerLinkActive="active">{{ i18n.t('nav.oxytocin') }}</a>
+      <a routerLink="/admin" routerLinkActive="active">{{ i18n.t('nav.admin') }}</a>
+    </nav>
+
+    <app-language-switch />
+  </header>
+
+  <main>
+    <router-outlet />
+  </main>
+</div>

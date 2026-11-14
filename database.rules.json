@@ -1,0 +1,83 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "secrets": {
+      "adminCode": {
+        ".read": false,
+        ".write": false
+      }
+    },
+
+    "adminAttempts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['count', 'at']) && newData.child('count').isNumber() && newData.child('at').isNumber() && newData.child('count').val() >= 1 && newData.child('count').val() <= 3 && ((!data.exists() && newData.child('count').val() === 1) || ((now - data.child('at').val()) > 300000 && newData.child('count').val() === 1) || ((now - data.child('at').val()) <= 300000 && newData.child('count').val() === (data.child('count').val() + 1)))"
+      }
+    },
+
+    "adminClaims": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "!newData.exists() || (newData.isString() && newData.val().length <= 200)"
+      }
+    },
+
+    "adminCheck": {
+      ".read": "auth != null && root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val()",
+      ".write": false
+    },
+
+    "listMeta": {
+      ".read": "auth != null && root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val()",
+      "$listId": {
+        ".read": true,
+        ".write": "auth != null && ((!data.exists() && newData.exists()) || (!newData.exists() && (root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val() || root.child('listClaims/' + $listId + '/' + auth.uid).exists())))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['title', 'salt', 'createdAt']) && newData.child('title').isString() && newData.child('title').val().length > 0 && newData.child('title').val().length <= 120 && newData.child('salt').isString() && newData.child('salt').val().length >= 20 && newData.child('createdAt').isNumber())"
+      }
+    },
+
+    "listSecrets": {
+      "$listId": {
+        ".read": false,
+        ".write": "auth != null && ((!data.exists() && newData.exists()) || (!newData.exists() && (root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val() || root.child('listClaims/' + $listId + '/' + auth.uid).exists())))",
+        ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-f0-9]{64}$/))"
+      }
+    },
+
+    "listClaims": {
+      "$listId": {
+        ".read": "auth != null && root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val()",
+        ".write": "auth != null && (!newData.exists() && root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val())",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "!newData.exists() || (newData.isString() && newData.val().matches(/^[a-f0-9]{64}$/))"
+        }
+      }
+    },
+
+    "listAttempts": {
+      "$listId": {
+        ".read": "auth != null && root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val()",
+        ".write": "auth != null && (!newData.exists() && root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val())",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['count', 'at']) && newData.child('count').isNumber() && newData.child('at').isNumber() && newData.child('count').val() >= 1 && newData.child('count').val() <= 3 && ((!data.exists() && newData.child('count').val() === 1) || ((now - data.child('at').val()) > 300000 && newData.child('count').val() === 1) || ((now - data.child('at').val()) <= 300000 && newData.child('count').val() === (data.child('count').val() + 1)))"
+        }
+      }
+    },
+
+    "listData": {
+      "$listId": {
+        ".read": "auth != null && root.child('listClaims/' + $listId + '/' + auth.uid).val() === root.child('listSecrets/' + $listId).val()",
+        ".write": "auth != null && ((newData.exists() && root.child('listClaims/' + $listId + '/' + auth.uid).val() === root.child('listSecrets/' + $listId).val()) || (!newData.exists() && (root.child('adminClaims/' + auth.uid).val() === root.child('secrets/adminCode').val() || root.child('listClaims/' + $listId + '/' + auth.uid).exists())))",
+        ".validate": "!newData.exists() || (newData.hasChildren(['iv', 'ct', 'updatedAt']) && newData.child('iv').isString() && newData.child('ct').isString() && newData.child('updatedAt').isNumber())"
+      }
+    }
+  }
+}

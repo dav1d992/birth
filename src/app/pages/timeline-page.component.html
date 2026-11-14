@@ -1,0 +1,65 @@
+<section class="timeline-wrap">
+  <header>
+    <h1>{{ i18n.t('timeline.title') }}</h1>
+    <p>{{ i18n.t('timeline.intro') }}</p>
+    <p class="philosophy">{{ i18n.t('timeline.philosophy') }}</p>
+    <p class="disclaimer">{{ i18n.t('timeline.disclaimer') }}</p>
+  </header>
+
+  <h2>{{ i18n.t('timeline.section.pregnancy') }}</h2>
+  <div class="overview-grid">
+    @for (block of overview; track block.titleKey) {
+      <article class="panel">
+        <h3>{{ i18n.t(block.titleKey) }}</h3>
+        <p>{{ i18n.t(block.bodyKey) }}</p>
+      </article>
+    }
+  </div>
+
+  <h2>{{ i18n.t('timeline.section.birth') }}</h2>
+  <div class="line">
+    @for (phase of phases; track phase.id) {
+      <article class="phase" [class.open]="isExpanded(phase.id)">
+        <button type="button" class="phase-head" (click)="toggle(phase.id)">
+          <span class="dot"></span>
+          <span class="phase-title">{{ i18n.t(phase.titleKey) }}</span>
+          <span class="chevron" aria-hidden="true"></span>
+        </button>
+
+        <div class="phase-collapse">
+          <div class="phase-body">
+            <h4>{{ i18n.t('timeline.whatsHappening') }}</h4>
+            <p>{{ i18n.t(phase.happeningKey) }}</p>
+
+            @if (phase.firstTimeKey) {
+              <h4>{{ i18n.t('timeline.firstTime') }}</h4>
+              <p>{{ i18n.t(phase.firstTimeKey) }}</p>
+            }
+
+            @if (phase.breathingKey) {
+              <h4>{{ i18n.t('timeline.breathing') }}</h4>
+              <p>{{ i18n.t(phase.breathingKey) }}</p>
+            }
+
+            @if (phase.painReliefKey) {
+              <h4>{{ i18n.t('timeline.painRelief') }}</h4>
+              <p>{{ i18n.t(phase.painReliefKey) }}</p>
+            }
+
+            <h4>{{ i18n.t('timeline.birthingPerson') }}</h4>
+            <p>{{ i18n.t(phase.birthingPersonKey) }}</p>
+
+            <h4>{{ i18n.t('timeline.partner') }}</h4>
+            <p>{{ i18n.t(phase.partnerKey) }}</p>
+
+            <h4>{{ i18n.t('timeline.callWard') }}</h4>
+            <p>{{ i18n.t(phase.callWardKey) }}</p>
+
+            <h4 class="red">{{ i18n.t('timeline.redFlags') }}</h4>
+            <p class="red">{{ i18n.t(phase.redFlagsKey) }}</p>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+</section>

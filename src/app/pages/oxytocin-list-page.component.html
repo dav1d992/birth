@@ -1,0 +1,49 @@
+<section class="page">
+  <h1>{{ title() }}</h1>
+
+  @if (errorKey().length > 0) {
+    <p class="error">{{ i18n.t(errorKey()) }}</p>
+  }
+
+  @if (!unlocked()) {
+    <h2>{{ i18n.t('oxytocin.list.unlockTitle') }}</h2>
+    <label>
+      {{ i18n.t('oxytocin.list.password') }}
+      <input
+        type="password"
+        name="oxytocin-unlock-password"
+        autocomplete="new-password"
+        [value]="password()"
+        (input)="onPasswordInput($event)"
+      />
+    </label>
+    <button type="button" (click)="unlock()">{{ i18n.t('oxytocin.list.unlock') }}</button>
+  } @else {
+    <div class="actions">
+      <button type="button" (click)="addItem()">{{ i18n.t('oxytocin.list.add') }}</button>
+      <button type="button" class="danger" (click)="deleteList()">{{ i18n.t('oxytocin.list.deleteList') }}</button>
+      @if (savedPulse()) {
+        <span class="saved">{{ i18n.t('oxytocin.list.saved') }}</span>
+      }
+    </div>
+
+    <ul>
+      @for (item of items(); track item.id; let idx = $index) {
+        <li>
+          <input type="checkbox" [checked]="item.done" (change)="toggleDone(item.id)" />
+          <input
+            class="text"
+            name="oxytocin-item-text"
+            autocomplete="off"
+            [value]="item.text"
+            [placeholder]="i18n.t('oxytocin.list.placeholder')"
+            (input)="onItemTextInput(item.id, $event)"
+          />
+          <button type="button" (click)="moveUp(idx)">{{ i18n.t('oxytocin.list.moveUp') }}</button>
+          <button type="button" (click)="moveDown(idx)">{{ i18n.t('oxytocin.list.moveDown') }}</button>
+          <button type="button" class="danger" (click)="deleteItem(item.id)">{{ i18n.t('oxytocin.list.delete') }}</button>
+        </li>
+      }
+    </ul>
+  }
+</section>
