@@ -1,8 +1,8 @@
-<div class="lang-switch" role="group" aria-label="Language switch">
-  <button type="button" [class.active]="i18n.lang() === 'da'" (click)="setLang('da')">
+<div class="lang-switch" role="group" [attr.aria-label]="i18n.t('design.language')">
+  <button type="button" [class.active]="i18n.lang() === 'da'" [attr.aria-pressed]="i18n.lang() === 'da'" (click)="setLang('da')">
     {{ i18n.t('lang.da') }}
   </button>
-  <button type="button" [class.active]="i18n.lang() === 'en'" (click)="setLang('en')">
+  <button type="button" [class.active]="i18n.lang() === 'en'" [attr.aria-pressed]="i18n.lang() === 'en'" (click)="setLang('en')">
     {{ i18n.t('lang.en') }}
   </button>
 </div>

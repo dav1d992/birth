@@ -1,10 +1,12 @@
 import { Component, signal, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { BIRTH_PHASES, PREGNANCY_OVERVIEW } from '../models/timeline';
 import { I18nService } from '../services/i18n.service';
 
 @Component({
   selector: 'app-timeline-page',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './timeline-page.component.html',
   styleUrl: './timeline-page.component.scss',
 })

@@ -3,11 +3,12 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AdminLockComponent } from './components/admin-lock.component';
 import { LanguageSwitchComponent } from './components/language-switch.component';
 import { I18nService } from './services/i18n.service';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LanguageSwitchComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LanguageSwitchComponent, AdminLockComponent],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',

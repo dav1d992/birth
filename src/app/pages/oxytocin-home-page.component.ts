@@ -1,9 +1,11 @@
 import { Component, signal, inject } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
+import { catchError, of, switchMap } from 'rxjs';
 import { I18nService } from '../services/i18n.service';
 import { OxytocinService } from '../services/oxytocin.service';
 import { AdminService } from '../services/admin.service';
-import type { RememberedList } from '../models/oxytocin';
+import type { AdminListMeta } from '../services/admin.service';
 
 @Component({
   selector: 'app-oxytocin-home-page',
@@ -21,11 +23,16 @@ export class OxytocinHomePageComponent {
   readonly title = signal<string>('');
   readonly password = signal<string>('');
   readonly errorKey = signal<string>('');
-  readonly rememberedLists = signal<Array<RememberedList>>([]);
-
-  constructor() {
-    void this.loadLists();
-  }
+  readonly allLists = toSignal(
+    toObservable(this.admin.isAdmin).pipe(
+      switchMap((isAdmin: boolean) =>
+        isAdmin
+          ? this.admin.watchListMeta().pipe(catchError(() => of<Array<AdminListMeta>>([])))
+          : of<Array<AdminListMeta>>([])
+      )
+    ),
+    { initialValue: [] }
+  );
 
   onTitleInput(event: Event): void {
     const target = event.target;
@@ -50,19 +57,26 @@ export class OxytocinHomePageComponent {
 
     try {
       const id: string = await this.#service.createList(this.title(), this.password());
-      await this.loadLists();
       await this.#router.navigate(['/oxytocin', id]);
     } catch (error) {
       this.errorKey.set(this.errorFrom(error));
     }
   }
 
-  private async loadLists(): Promise<void> {
-    try {
-      this.rememberedLists.set(await this.#service.loadRememberedLists());
-    } catch {
-      this.rememberedLists.set([]);
+  async deleteList(listId: string, title: string): Promise<void> {
+    if (!window.confirm(this.i18n.t('admin.deleteConfirm', { title }))) {
+      return;
     }
+
+    try {
+      await this.admin.deleteList(listId);
+    } catch (error) {
+      this.errorKey.set(this.errorFrom(error));
+    }
+  }
+
+  asDate(value: number): string {
+    return Number.isFinite(value) && value > 0 ? new Date(value).toLocaleString() : '-';
   }
 
   private errorFrom(error: unknown): string {

@@ -1,27 +1,56 @@
 <section class="timeline-wrap">
-  <header>
-    <h1>{{ i18n.t('timeline.title') }}</h1>
-    <p>{{ i18n.t('timeline.intro') }}</p>
-    <p class="philosophy">{{ i18n.t('timeline.philosophy') }}</p>
-    <p class="disclaimer">{{ i18n.t('timeline.disclaimer') }}</p>
+  <header class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">{{ i18n.t('design.eyebrow') }}</p>
+      <h1>{{ i18n.t('design.heroStart') }} <em>{{ i18n.t('design.heroEnd') }}</em></h1>
+      <p class="hero-subtitle">{{ i18n.t('timeline.title') }}</p>
+      <p class="hero-intro">{{ i18n.t('timeline.intro') }}</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#birth-phases">{{ i18n.t('design.explore') }} <span aria-hidden="true">↘</span></a>
+        <a class="text-link" routerLink="/oxytocin">{{ i18n.t('design.listLink') }} <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+    <figure class="hero-art">
+      <img src="bloom.svg" alt="" width="520" height="600" fetchpriority="high" />
+      <figcaption>{{ i18n.t('design.artCaption') }}</figcaption>
+    </figure>
   </header>
 
-  <h2>{{ i18n.t('timeline.section.pregnancy') }}</h2>
+  <aside class="approach">
+    <div>
+      <span class="eyebrow">{{ i18n.t('design.approach') }}</span>
+      <h2>{{ i18n.t('design.approachTitle') }}</h2>
+    </div>
+    <div>
+      <p class="philosophy">{{ i18n.t('timeline.philosophy') }}</p>
+      <p class="disclaimer">{{ i18n.t('timeline.disclaimer') }}</p>
+    </div>
+  </aside>
+
+  <div class="section-heading">
+    <span class="section-index" aria-hidden="true">01 /</span>
+    <div><span class="eyebrow">{{ i18n.t('design.pregnancy') }}</span><h2>{{ i18n.t('timeline.section.pregnancy') }}</h2></div>
+  </div>
   <div class="overview-grid">
-    @for (block of overview; track block.titleKey) {
+    @for (block of overview; track block.titleKey; let idx = $index) {
       <article class="panel" animate.enter="enter">
+        <span class="panel-number" aria-hidden="true">0{{ idx + 1 }}</span>
         <h3>{{ i18n.t(block.titleKey) }}</h3>
         <p>{{ i18n.t(block.bodyKey) }}</p>
       </article>
     }
   </div>
 
-  <h2>{{ i18n.t('timeline.section.birth') }}</h2>
+  <div class="section-heading" id="birth-phases">
+    <span class="section-index" aria-hidden="true">02 /</span>
+    <div><span class="eyebrow">{{ i18n.t('design.birth') }}</span><h2>{{ i18n.t('timeline.section.birth') }}</h2></div>
+  </div>
+  <p class="phases-hint">{{ i18n.t('design.phasesHint') }}</p>
   <div class="line">
-    @for (phase of phases; track phase.id) {
+    @for (phase of phases; track phase.id; let idx = $index) {
       <article class="phase" [class.open]="isExpanded(phase.id)" animate.enter="enter">
-        <button type="button" class="phase-head" (click)="toggle(phase.id)">
-          <span class="dot"></span>
+        <button type="button" class="phase-head" [id]="'phase-heading-' + phase.id" [attr.aria-expanded]="isExpanded(phase.id)" [attr.aria-controls]="'phase-content-' + phase.id" (click)="toggle(phase.id)">
+          <span class="phase-number" aria-hidden="true">0{{ idx + 1 }}</span>
           <span class="phase-title">{{ i18n.t(phase.titleKey) }}</span>
           @if (phase.locationKey) {
             <span class="phase-location">{{ i18n.t(phase.locationKey) }}</span>
@@ -29,7 +58,7 @@
           <span class="chevron" aria-hidden="true"></span>
         </button>
 
-        <div class="phase-collapse">
+        <div class="phase-collapse" [id]="'phase-content-' + phase.id" [attr.aria-labelledby]="'phase-heading-' + phase.id" [attr.inert]="isExpanded(phase.id) ? null : ''">
           <div class="phase-body">
             <h4>{{ i18n.t('timeline.whatsHappening') }}</h4>
             <p>{{ i18n.t(phase.happeningKey) }}</p>
@@ -37,11 +66,6 @@
             @if (phase.firstTimeKey) {
               <h4>{{ i18n.t('timeline.firstTime') }}</h4>
               <p>{{ i18n.t(phase.firstTimeKey) }}</p>
-            }
-
-            @if (phase.painReliefKey) {
-              <h4>{{ i18n.t('timeline.painRelief') }}</h4>
-              <p>{{ i18n.t(phase.painReliefKey) }}</p>
             }
 
             <h4>{{ i18n.t('timeline.birthingPerson') }}</h4>

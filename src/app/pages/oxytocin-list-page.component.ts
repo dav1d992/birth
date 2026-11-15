@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Subscription } from 'rxjs';
 import { I18nService } from '../services/i18n.service';
@@ -9,6 +9,7 @@ import type { OxytocinItem } from '../models/oxytocin';
 @Component({
   selector: 'app-oxytocin-list-page',
   standalone: true,
+  imports: [RouterLink],
   templateUrl: './oxytocin-list-page.component.html',
   styleUrl: './oxytocin-list-page.component.scss',
 })

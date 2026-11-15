@@ -1,0 +1,48 @@
+<button
+  type="button"
+  class="lock"
+  [class.active]="admin.isAdmin()"
+  [attr.aria-label]="i18n.t('nav.admin')"
+  [attr.title]="i18n.t('nav.admin')"
+  [attr.aria-expanded]="open()"
+  (click)="toggle()"
+>
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="11" width="16" height="9" rx="2" />
+    @if (admin.isAdmin()) {
+      <path d="M8 11V8a4 4 0 0 1 7.75-1.4" />
+    } @else {
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    }
+  </svg>
+</button>
+
+@if (open()) {
+  <div class="popover" animate.enter="enter" animate.leave="leave">
+    @if (admin.isAdmin()) {
+      <p>{{ i18n.t('admin.loggedIn') }}</p>
+      <button type="button" class="action" (click)="logout()">{{ i18n.t('admin.logout') }}</button>
+    } @else {
+      <form (submit)="login($event)">
+        <label>
+          {{ i18n.t('admin.code') }}
+          <input
+            class="masked"
+            type="text"
+            name="birth-admin-code"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            [value]="code()"
+            (input)="onCodeInput($event)"
+          />
+        </label>
+        @if (errorKey().length > 0) {
+          <p class="error" role="alert" animate.enter="enter">{{ i18n.t(errorKey()) }}</p>
+        }
+        <button type="submit" class="action" [disabled]="busy()">{{ i18n.t('admin.login') }}</button>
+      </form>
+    }
+  </div>
+}

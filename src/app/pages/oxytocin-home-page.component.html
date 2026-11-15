@@ -1,50 +1,78 @@
 <section class="page">
-  <h1>{{ i18n.t('oxytocin.home.title') }}</h1>
-  <p>{{ i18n.t('oxytocin.home.intro') }}</p>
+  <div class="create-layout">
+    <header class="list-intro">
+      <p class="eyebrow">{{ i18n.t('design.listEyebrow') }}</p>
+      <h1>{{ i18n.t('oxytocin.home.title') }}</h1>
+      <p class="intro-text">{{ i18n.t('oxytocin.home.intro') }}</p>
+      <div class="list-inspiration">
+        <img src="bloom.svg" alt="" width="130" height="150" />
+        <p>{{ i18n.t('design.listNote') }}</p>
+      </div>
+    </header>
 
-  @if (errorKey().length > 0) {
-    <p class="error" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
-  }
+    <form class="create-card" (submit)="$event.preventDefault(); create()">
+      <span class="card-symbol" aria-hidden="true">✳</span>
+      <h2>{{ i18n.t('design.listFormTitle') }}</h2>
 
-  <label>
-    {{ i18n.t('oxytocin.home.listTitle') }}
-    <input
-      name="oxytocin-list-title"
-      autocomplete="off"
-      autocapitalize="off"
-      [value]="title()"
-      (input)="onTitleInput($event)"
-    />
-  </label>
+      @if (errorKey().length > 0) {
+        <p class="error" role="alert" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
+      }
 
-  <label>
-    {{ i18n.t('oxytocin.home.password') }}
-    <input
-      class="masked"
-      type="text"
-      name="oxytocin-new-secret"
-      autocomplete="off"
-      autocapitalize="off"
-      autocorrect="off"
-      spellcheck="false"
-      [placeholder]="i18n.t('oxytocin.home.passwordHint')"
-      [value]="password()"
-      (input)="onPasswordInput($event)"
-    />
-  </label>
+      <label>
+        {{ i18n.t('oxytocin.home.listTitle') }}
+        <input
+          name="oxytocin-list-title"
+          autocomplete="off"
+          autocapitalize="off"
+          [placeholder]="i18n.t('design.listTitleHint')"
+          [value]="title()"
+          (input)="onTitleInput($event)"
+        />
+      </label>
 
-  <button type="button" (click)="create()">{{ i18n.t('oxytocin.home.create') }}</button>
+      <label>
+        {{ i18n.t('oxytocin.home.password') }}
+        <input
+          class="masked"
+          type="text"
+          name="oxytocin-new-secret"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          [placeholder]="i18n.t('oxytocin.home.passwordHint')"
+          [value]="password()"
+          (input)="onPasswordInput($event)"
+        />
+      </label>
+
+      <button class="create-button" type="submit">{{ i18n.t('oxytocin.home.create') }} <span aria-hidden="true">↗</span></button>
+      <p class="privacy-note">{{ i18n.t('design.listPrivate') }}</p>
+    </form>
+  </div>
 
   @if (admin.isAdmin()) {
-    <h2>{{ i18n.t('oxytocin.home.savedLists') }}</h2>
-    @if (rememberedLists().length === 0) {
+    <div class="section-heading">
+      <span class="section-index" aria-hidden="true">✳</span>
+      <div>
+        <span class="eyebrow">{{ i18n.t('nav.admin') }}</span>
+        <h2>{{ i18n.t('oxytocin.home.savedLists') }}</h2>
+      </div>
+    </div>
+    @if (allLists().length === 0) {
       <p animate.enter="enter">{{ i18n.t('oxytocin.home.empty') }}</p>
     } @else {
       <ul>
-        @for (item of rememberedLists(); track item.id) {
+        @for (item of allLists(); track item.id) {
           <li animate.enter="enter" animate.leave="leave">
-            <span>{{ item.title }}</span>
-            <a [routerLink]="['/oxytocin', item.id]">{{ i18n.t('oxytocin.home.open') }}</a>
+            <div>
+              <span>{{ item.title }}</span>
+              <small>{{ i18n.t('admin.createdAt') }}: {{ asDate(item.createdAt) }}</small>
+            </div>
+            <div class="item-actions">
+              <a [routerLink]="['/oxytocin', item.id]">{{ i18n.t('oxytocin.home.open') }}</a>
+              <button type="button" class="danger" (click)="deleteList(item.id, item.title)">{{ i18n.t('admin.delete') }}</button>
+            </div>
           </li>
         }
       </ul>

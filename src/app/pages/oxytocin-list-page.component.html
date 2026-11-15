@@ -1,30 +1,39 @@
 <section class="page">
-  <h1>{{ title() }}</h1>
+  <a class="back-link" routerLink="/oxytocin"><span aria-hidden="true">←</span> {{ i18n.t('design.backToLists') }}</a>
+  <header class="list-header">
+    <p class="eyebrow">{{ i18n.t('design.listEyebrow') }}</p>
+    <h1>{{ title() || i18n.t('oxytocin.home.title') }}</h1>
+    <p>{{ i18n.t('design.listNote') }}</p>
+    <span class="header-flower" aria-hidden="true">✳</span>
+  </header>
 
   @if (errorKey().length > 0) {
-    <p class="error" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
+    <p class="error" role="alert" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
   }
 
   @if (!unlocked()) {
-    <h2>{{ i18n.t('oxytocin.list.unlockTitle') }}</h2>
-    <label>
-      {{ i18n.t('oxytocin.list.password') }}
-      <input
-        class="masked"
-        type="text"
-        name="oxytocin-unlock-secret"
-        autocomplete="off"
-        autocapitalize="off"
-        autocorrect="off"
-        spellcheck="false"
-        [value]="password()"
-        (input)="onPasswordInput($event)"
-      />
-    </label>
-    <button type="button" (click)="unlock()">{{ i18n.t('oxytocin.list.unlock') }}</button>
+    <form class="unlock-card" (submit)="$event.preventDefault(); unlock()">
+      <svg class="unlock-icon" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg>
+      <h2>{{ i18n.t('oxytocin.list.unlockTitle') }}</h2>
+      <label>
+        {{ i18n.t('oxytocin.list.password') }}
+        <input
+          class="masked"
+          type="text"
+          name="oxytocin-unlock-secret"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          [value]="password()"
+          (input)="onPasswordInput($event)"
+        />
+      </label>
+      <button type="submit">{{ i18n.t('oxytocin.list.unlock') }} <span aria-hidden="true">↗</span></button>
+    </form>
   } @else {
     <div class="actions">
-      <button type="button" (click)="addItem()">{{ i18n.t('oxytocin.list.add') }}</button>
+      <button type="button" (click)="addItem()"><span aria-hidden="true">＋</span> {{ i18n.t('oxytocin.list.add') }}</button>
       <button type="button" class="ghost" (click)="shareLink()">
         @if (linkCopied()) {
           <span animate.enter="enter">{{ i18n.t('oxytocin.list.linkCopied') }}</span>
@@ -54,18 +63,24 @@
     <ul>
       @for (item of items(); track item.id; let idx = $index) {
         <li [attr.data-id]="item.id" animate.enter="enter" animate.leave="leave">
+          <span class="item-number" aria-hidden="true">{{ idx + 1 < 10 ? '0' : '' }}{{ idx + 1 }}</span>
           <input
             class="text"
             name="oxytocin-item-text"
             autocomplete="off"
+            [attr.aria-label]="i18n.t('oxytocin.list.placeholder') + ' ' + (idx + 1)"
             [value]="item.text"
             [placeholder]="i18n.t('oxytocin.list.placeholder')"
             (input)="onItemTextInput(item.id, $event)"
           />
-          <button type="button" (click)="moveUp(idx)">{{ i18n.t('oxytocin.list.moveUp') }}</button>
-          <button type="button" (click)="moveDown(idx)">{{ i18n.t('oxytocin.list.moveDown') }}</button>
-          <button type="button" class="danger" (click)="deleteItem(item.id)">{{ i18n.t('oxytocin.list.delete') }}</button>
+          <div class="row-actions">
+            <button type="button" [disabled]="idx === 0" [attr.aria-label]="i18n.t('oxytocin.list.moveUp')" [attr.title]="i18n.t('oxytocin.list.moveUp')" (click)="moveUp(idx)"><span aria-hidden="true">↑</span></button>
+            <button type="button" [disabled]="idx === items().length - 1" [attr.aria-label]="i18n.t('oxytocin.list.moveDown')" [attr.title]="i18n.t('oxytocin.list.moveDown')" (click)="moveDown(idx)"><span aria-hidden="true">↓</span></button>
+            <button type="button" class="danger" [attr.aria-label]="i18n.t('oxytocin.list.delete')" [attr.title]="i18n.t('oxytocin.list.delete')" (click)="deleteItem(item.id)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5"/></svg></button>
+          </div>
         </li>
+      } @empty {
+        <li class="empty-state"><span aria-hidden="true">✳</span><p>{{ i18n.t('design.listEmpty') }}</p></li>
       }
     </ul>
   }

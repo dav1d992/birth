@@ -3,7 +3,6 @@ export interface TimelinePhase {
   titleKey: string;
   locationKey?: string;
   happeningKey: string;
-  painReliefKey?: string;
   firstTimeKey?: string;
   birthingPersonKey: string;
   partnerKey: string;
@@ -41,7 +40,6 @@ export const BIRTH_PHASES: ReadonlyArray<TimelinePhase> = [
     titleKey: 'timeline.phase.latent.title',
     locationKey: 'timeline.location.home',
     happeningKey: 'timeline.phase.latent.happening',
-    painReliefKey: 'timeline.phase.latent.painRelief',
     birthingPersonKey: 'timeline.phase.latent.birthingPerson',
     partnerKey: 'timeline.phase.latent.partner',
     callWardKey: 'timeline.phase.latent.callWard',
@@ -54,7 +52,6 @@ export const BIRTH_PHASES: ReadonlyArray<TimelinePhase> = [
     titleKey: 'timeline.phase.active.title',
     locationKey: 'timeline.location.hospital',
     happeningKey: 'timeline.phase.active.happening',
-    painReliefKey: 'timeline.phase.active.painRelief',
     firstTimeKey: 'timeline.phase.active.firstTime',
     birthingPersonKey: 'timeline.phase.active.birthingPerson',
     partnerKey: 'timeline.phase.active.partner',
@@ -65,7 +62,6 @@ export const BIRTH_PHASES: ReadonlyArray<TimelinePhase> = [
     titleKey: 'timeline.phase.transition.title',
     locationKey: 'timeline.location.hospital',
     happeningKey: 'timeline.phase.transition.happening',
-    painReliefKey: 'timeline.phase.transition.painRelief',
     birthingPersonKey: 'timeline.phase.transition.birthingPerson',
     partnerKey: 'timeline.phase.transition.partner',
     redFlagsKey: 'timeline.phase.transition.redFlags',

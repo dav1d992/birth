@@ -17,11 +17,6 @@ export const routes: Routes = [
 		data: { titleKey: 'oxytocin.list.pageTitle' },
 	},
 	{
-		path: 'admin',
-		loadComponent: () => import('./pages/admin-page.component').then((module) => module.AdminPageComponent),
-		data: { titleKey: 'admin.pageTitle' },
-	},
-	{
 		path: '**',
 		redirectTo: '',
 	},
