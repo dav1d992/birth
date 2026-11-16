@@ -7,6 +7,39 @@
   padding: 1.2rem clamp(1rem, 3.5vw, 3.5rem) 0;
 }
 
+.list-navigation {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.list-view main {
+  padding-top: 1.5rem;
+}
+
+.leave-dialog {
+  width: min(480px, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: clamp(1.5rem, 5vw, 2rem);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+}
+
+.leave-dialog::backdrop {
+  background: rgba(56, 45, 50, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-heading { display: flex; align-items: center; gap: 0.75rem; }
+.dialog-heading svg { flex-shrink: 0; color: var(--primary); }
+.dialog-heading h2 { font-size: 1.8rem; }
+.leave-dialog p { margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; }
+.dialog-actions button { flex: 1 1 150px; }
+
 .site-header {
   position: sticky;
   top: 1rem;
@@ -118,9 +151,9 @@ main {
   .site-header {
     top: 0.6rem;
     flex-wrap: wrap;
-    padding: 0.75rem;
-    border-radius: 24px;
-    gap: 0.65rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 18px;
+    gap: 0.15rem;
   }
   .brand { gap: 0.45rem; font-size: 1.05rem; }
   .brand-mark { width: 27px; height: 32px; }
@@ -129,10 +162,10 @@ main {
   .site-header nav {
     order: 3;
     width: 100%;
-    padding-top: 0.6rem;
+    padding-top: 0.2rem;
     border-top: 1px solid var(--border);
   }
-  .site-header nav a { flex: 1; justify-content: center; padding: 0.5rem; }
+  .site-header nav a { flex: 1; justify-content: center; padding: 0.25rem 0.5rem; min-height: 32px; font-size: 0.75rem; }
   main { padding-top: 2rem; }
   .site-footer { flex-wrap: wrap; gap: 0.75rem; }
   .site-footer p { order: 3; width: 100%; }

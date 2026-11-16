@@ -143,13 +143,6 @@ button:disabled {
   margin: 4rem 0 1.8rem;
 }
 
-.section-heading::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
 .section-index {
   color: var(--primary);
   font-size: 0.72rem;

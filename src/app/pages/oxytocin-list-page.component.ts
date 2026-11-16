@@ -1,5 +1,5 @@
-import { Component, DestroyRef, ElementRef, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { Subscription } from 'rxjs';
 import { I18nService } from '../services/i18n.service';
@@ -9,7 +9,6 @@ import type { OxytocinItem } from '../models/oxytocin';
 @Component({
   selector: 'app-oxytocin-list-page',
   standalone: true,
-  imports: [RouterLink],
   templateUrl: './oxytocin-list-page.component.html',
   styleUrl: './oxytocin-list-page.component.scss',
 })
@@ -30,30 +29,18 @@ export class OxytocinListPageComponent {
   readonly showInfo = signal<boolean>(false);
   readonly linkCopied = signal<boolean>(false);
 
-  #saveHandle: ReturnType<typeof setTimeout> | null = null;
-  #allowAutoSave = false;
+  readonly drafts = signal<Record<string, string>>({});
+  readonly busy = signal(false);
+  readonly syncing = signal(false);
+  #pendingIds = new Set<string>();
+  #remoteItems: Array<OxytocinItem> = [];
+  #itemsSub: Subscription | null = null;
   #metaSub: Subscription | null = null;
 
   constructor() {
     this.#route.paramMap.pipe(takeUntilDestroyed(this.#destroyRef)).subscribe((params) => {
       const id: string = params.get('id') ?? '';
       this.setCurrentList(id);
-    });
-
-    effect(() => {
-      const currentItems: Array<OxytocinItem> = this.items();
-      const id: string = this.listId();
-      if (!this.#allowAutoSave || id.length === 0 || !this.unlocked()) {
-        return;
-      }
-
-      if (this.#saveHandle !== null) {
-        clearTimeout(this.#saveHandle);
-      }
-
-      this.#saveHandle = setTimeout(() => {
-        this.persistItems(id, currentItems);
-      }, 500);
     });
   }
 
@@ -68,38 +55,95 @@ export class OxytocinListPageComponent {
 
   onItemTextInput(itemId: string, event: Event): void {
     const target = event.target;
-    if (!(target instanceof HTMLInputElement)) {
+    if (!(target instanceof HTMLTextAreaElement)) {
       return;
     }
 
-    const value: string = target.value;
-    this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> =>
-      items.map((item: OxytocinItem): OxytocinItem => (item.id === itemId ? { ...item, text: value } : item))
-    );
+    this.drafts.update((drafts) => ({ ...drafts, [itemId]: target.value }));
   }
 
   async unlock(): Promise<void> {
+    if (this.busy()) return;
+    const id = this.listId();
+    this.busy.set(true);
     this.errorKey.set('');
 
     try {
-      const unlockedItems: Array<OxytocinItem> = await this.#service.unlockList(this.listId(), this.password());
+      const unlockedItems = await this.#service.unlockList(id, this.password());
+      if (this.listId() !== id || this.#destroyRef.destroyed) return;
       this.items.set(unlockedItems);
+      this.#remoteItems = unlockedItems;
       this.unlocked.set(true);
-      this.#allowAutoSave = true;
+      this.password.set('');
+      this.syncing.set(true);
+      this.#itemsSub?.unsubscribe();
+      this.#itemsSub = this.#service.watchItems(id)
+        .pipe(takeUntilDestroyed(this.#destroyRef))
+        .subscribe({
+          next: (items) => {
+            this.#remoteItems = items;
+            this.flipReorder(() => this.applyRemoteItems());
+          },
+          error: (error: unknown) => {
+            this.syncing.set(false);
+            this.errorKey.set(this.errorFrom(error));
+            if (error instanceof Error && error.message === 'err.notFound') {
+              this.items.set([]);
+              this.unlocked.set(false);
+            }
+          },
+        });
     } catch (error) {
-      this.errorKey.set(this.errorFrom(error));
+      if (this.listId() === id) this.errorKey.set(this.errorFrom(error));
+    } finally {
+      if (this.listId() === id) this.busy.set(false);
     }
   }
 
   addItem(): void {
+    const id = crypto.randomUUID();
+    this.#pendingIds.add(id);
+    this.drafts.update((drafts) => ({ ...drafts, [id]: '' }));
     this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> => [
       ...items,
       {
-        id: crypto.randomUUID(),
+        id,
         text: '',
         done: false,
       },
     ]);
+  }
+
+  async submitItem(item: OxytocinItem): Promise<void> {
+    const text = (this.drafts()[item.id] ?? item.text).trim();
+    if (text.length === 0 || this.busy()) return;
+    const draft = this.drafts()[item.id];
+    const isNew = this.#pendingIds.has(item.id);
+    const saved = await this.persistMutation((items) => {
+      if (isNew) return [...items.filter((entry) => entry.id !== item.id), { ...item, text }];
+      if (!items.some((entry) => entry.id === item.id)) throw new Error('err.notFound');
+      return items.map((entry) => entry.id === item.id ? { ...entry, text } : entry);
+    });
+    if (saved) {
+      this.#pendingIds.delete(item.id);
+      if (this.drafts()[item.id] === draft) {
+        this.drafts.update((drafts) => {
+          const next = { ...drafts };
+          delete next[item.id];
+          return next;
+        });
+      }
+    }
+  }
+
+  isPending(id: string): boolean {
+    return this.#pendingIds.has(id);
+  }
+
+  private applyRemoteItems(): void {
+    const remoteIds = new Set(this.#remoteItems.map((item) => item.id));
+    const pending = this.items().filter((item) => this.#pendingIds.has(item.id) && !remoteIds.has(item.id));
+    this.items.set([...this.#remoteItems, ...pending]);
   }
 
   toggleInfo(): void {
@@ -132,25 +176,45 @@ export class OxytocinListPageComponent {
   }
 
   deleteItem(itemId: string): void {
-    this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> =>
-      items.filter((item: OxytocinItem): boolean => item.id !== itemId)
-    );
+    if (this.busy()) return;
+    if (this.#pendingIds.delete(itemId)) {
+      this.items.update((items) => items.filter((item) => item.id !== itemId));
+      return;
+    }
+    void this.persistMutation((items) => items.filter((item) => item.id !== itemId));
   }
 
   async deleteList(): Promise<void> {
+    if (this.busy()) return;
     const ok: boolean = window.confirm(this.i18n.t('admin.deleteConfirm', { title: this.title() }));
     if (!ok) {
       return;
     }
 
-    await this.#service.deleteList(this.listId());
-    await this.#router.navigate(['/oxytocin']);
+    this.busy.set(true);
+    try {
+      await this.#service.deleteList(this.listId());
+      await this.#router.navigate(['/oxytocin']);
+    } catch (error) {
+      this.errorKey.set(this.errorFrom(error));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
   private setCurrentList(id: string): void {
     this.listId.set(id);
+    this.title.set('');
     this.unlocked.set(false);
-    this.#allowAutoSave = false;
+    this.#itemsSub?.unsubscribe();
+    this.#itemsSub = null;
+    this.#pendingIds.clear();
+    this.#remoteItems = [];
+    this.drafts.set({});
+    this.busy.set(false);
+    this.syncing.set(false);
+    this.password.set('');
+    this.errorKey.set('');
     this.items.set([]);
 
     if (this.#metaSub !== null) {
@@ -167,6 +231,10 @@ export class OxytocinListPageComponent {
   }
 
   private reorder(from: number, to: number): void {
+    if (this.busy()) return;
+    const moved = this.items()[from];
+    const target = this.items()[to];
+    if (!moved || !target || this.isPending(moved.id) || this.isPending(target.id)) return;
     this.flipReorder((): void => {
       this.items.update((items: Array<OxytocinItem>): Array<OxytocinItem> => {
         const updated = [...items];
@@ -178,6 +246,16 @@ export class OxytocinListPageComponent {
         updated.splice(to, 0, moved);
         return updated;
       });
+    });
+    void this.persistMutation((items) => {
+      const next = [...items];
+      const sourceIndex = next.findIndex((item) => item.id === moved.id);
+      if (sourceIndex < 0 || !next.some((item) => item.id === target.id)) return items;
+      const [entry] = next.splice(sourceIndex, 1);
+      if (!entry) return items;
+      const targetIndex = next.findIndex((item) => item.id === target.id);
+      next.splice(targetIndex + (to > from ? 1 : 0), 0, entry);
+      return next;
     });
   }
 
@@ -226,15 +304,34 @@ export class OxytocinListPageComponent {
     return positions;
   }
 
-  private async persistItems(id: string, items: Array<OxytocinItem>): Promise<void> {
+  private async persistMutation(mutate: (items: Array<OxytocinItem>) => Array<OxytocinItem>): Promise<boolean> {
+    if (this.busy()) return false;
+    const id = this.listId();
+    this.busy.set(true);
+    this.errorKey.set('');
     try {
-      await this.#service.saveItems(id, items);
+      await this.#service.mutateItems(id, mutate);
+      return this.listId() === id && !this.#destroyRef.destroyed;
     } catch (error) {
-      this.errorKey.set(this.errorFrom(error));
+      if (this.listId() === id) {
+        this.errorKey.set(this.errorFrom(error));
+        this.applyRemoteItems();
+      }
+      return false;
+    } finally {
+      if (this.listId() === id) this.busy.set(false);
     }
   }
 
   private errorFrom(error: unknown): string {
+    if (typeof error === 'object' && error !== null) {
+      const details = error as { code?: unknown; message?: unknown };
+      const code = typeof details.code === 'string' ? details.code.toLowerCase() : '';
+      const message = typeof details.message === 'string' ? details.message : '';
+      if (code === 'permission_denied' || code === 'permission-denied' || /permission[ _-]denied/i.test(message)) {
+        return 'err.accessDenied';
+      }
+    }
     if (error instanceof Error && error.message.length > 0) {
       return error.message;
     }

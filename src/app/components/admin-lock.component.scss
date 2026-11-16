@@ -74,6 +74,10 @@ p {
 
 .action:hover { background: var(--primary-dim); }
 
+@media (max-width: 760px) {
+  .lock { width: 34px; height: 34px; }
+}
+
 .action:disabled {
   opacity: 0.6;
   cursor: default;

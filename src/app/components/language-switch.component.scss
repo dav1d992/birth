@@ -30,3 +30,8 @@
     box-shadow: var(--shadow-sm);
   }
 }
+
+@media (max-width: 760px) {
+  .lang-switch { padding: 0; background: transparent; }
+  .lang-switch button { min-height: 32px; padding: 0.35rem 0.45rem; }
+}

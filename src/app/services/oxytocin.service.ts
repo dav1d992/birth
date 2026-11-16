@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { get, onValue, push, ref, serverTimestamp, update } from 'firebase/database';
+import { Observable, switchMap } from 'rxjs';
+import { get, onValue, push, ref, runTransaction, serverTimestamp, update } from 'firebase/database';
 import type { DataSnapshot } from 'firebase/database';
 import { FIREBASE_DB } from '../core/firebase';
 import { AuthSessionService } from './auth-session.service';
@@ -164,6 +164,56 @@ export class OxytocinService {
       }
       throw error;
     }
+  }
+
+  watchItems(listId: string): Observable<Array<OxytocinItem>> {
+    const key = this.#activeKey;
+    if (key === null || this.activeListId() !== listId) {
+      throw new Error('err.locked');
+    }
+
+    return new Observable<OxytocinListData>((subscriber) =>
+      onValue(ref(this.#db, `listData/${listId}`), (snapshot) => {
+        const payload = snapshot.val() as OxytocinListData | null;
+        if (payload === null) {
+          subscriber.error(new Error('err.notFound'));
+          return;
+        }
+        subscriber.next(payload);
+      }, (error: unknown) => subscriber.error(error))
+    ).pipe(switchMap((payload) => this.decryptItems(key, payload)));
+  }
+
+  async mutateItems(
+    listId: string,
+    mutate: (items: Array<OxytocinItem>) => Array<OxytocinItem>
+  ): Promise<void> {
+    const key = this.#activeKey;
+    if (key === null || this.activeListId() !== listId) {
+      throw new Error('err.locked');
+    }
+
+    const dataRef = ref(this.#db, `listData/${listId}`);
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const snapshot = await get(dataRef);
+      const previous = snapshot.val() as OxytocinListData | null;
+      if (previous === null) {
+        throw new Error('err.notFound');
+      }
+      const next = mutate(await this.decryptItems(key, previous));
+      const encrypted = await this.encryptItems(key, next);
+      // Retry encryption against fresh data if another client changed the ciphertext.
+      const result = await runTransaction(dataRef, (current: OxytocinListData | null) => {
+        if (current?.ct !== previous.ct || current?.iv !== previous.iv) {
+          return undefined;
+        }
+        return { iv: encrypted.iv, ct: encrypted.ct, updatedAt: serverTimestamp() };
+      }, { applyLocally: false });
+      if (result.committed) {
+        return;
+      }
+    }
+    throw new Error('err.listConflict');
   }
 
   async saveItems(listId: string, items: Array<OxytocinItem>): Promise<void> {

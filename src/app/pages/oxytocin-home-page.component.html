@@ -11,8 +11,10 @@
     </header>
 
     <form class="create-card" (submit)="$event.preventDefault(); create()">
-      <span class="card-symbol" aria-hidden="true">✳</span>
-      <h2>{{ i18n.t('design.listFormTitle') }}</h2>
+      <div class="card-heading">
+        <span class="card-symbol" aria-hidden="true">✳</span>
+        <h2>{{ i18n.t('design.listFormTitle') }}</h2>
+      </div>
 
       @if (errorKey().length > 0) {
         <p class="error" role="alert" animate.enter="enter" animate.leave="leave">{{ i18n.t(errorKey()) }}</p>
